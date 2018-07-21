@@ -41,6 +41,7 @@ def main():
     parser.add_option("-t", "--timeout",
                       default=None,
                       help="Try hard to inject for the time specified [default: %default]")
+    parser.add_option("-i", "--inject", help="path to JS file to inject")
 
     if "--help" in sys.argv:
         parser.print_help()
@@ -64,31 +65,44 @@ def main():
 
     options.timeout = time.time() + int(options.timeout) if options.timeout else 5
 
-    #
     erb = ElectronRemoteDebugger.execute(target)
     # launch browser?
     if options.browser:
         launch_url("http://%(host)s:%(port)s/" % erb.params)
 
     # erb = ElectronRemoteDebugger("localhost", 8888)
+
+    scripts = determine_scripts_to_run(options)
+    inject(erb, options.timeout, scripts)
+
+
+def determine_scripts_to_run(options):
+    scripts = []
+    if options.enable_devtools_hotkeys:
+        scripts.append(SCRIPT_HOTKEYS_F12_DEVTOOLS_F5_REFRESH)
+    if options.inject is not None:
+        scripts.append(open(options.inject, "r").read())
+    return scripts
+
+
+def inject(erb, timeout, scripts):
     windows_visited = set()
     while True:
         for w in (_ for _ in erb.windows() if _['id'] not in windows_visited):
-            if options.enable_devtools_hotkeys:
+            for script in scripts:
                 try:
-                    logger.info("injecting hotkeys script into %s" % w['id'])
-                    logger.debug(erb.eval(w, SCRIPT_HOTKEYS_F12_DEVTOOLS_F5_REFRESH))
+                    logger.info("injecting script into %s" % w['id'])
+                    logger.debug(erb.eval(w, script))
                 except Exception as e:
                     logger.exception(e)
                 finally:
                     # patch windows only once
                     windows_visited.add(w['id'])
 
-        if time.time() > options.timeout:
+        if time.time() > timeout:
             break
         logger.debug("timeout not hit.")
         time.sleep(1)
-
 
 if __name__ == '__main__':
     logging.basicConfig(format='[%(filename)s - %(funcName)20s() ][%(levelname)8s] %(message)s',
