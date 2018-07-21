@@ -2,17 +2,18 @@
 # -*- coding: utf-8 -*-
 # @author: github.com/tintinweb
 
-import os, subprocess
+import os
+import subprocess
 import sys
 import time
-from optparse import OptionParser
-from utils import ElectronRemoteDebugger, SCRIPT_HOTKEYS_F12_DEVTOOLS_F5_REFRESH
+from argparse import ArgumentParser
+from utils import ElectronRemoteDebugger, SCRIPT_HOTKEYS_F12_DEVTOOLS_F5_REFRESH, SCRIPT_INSERT_CSS
 import logging
 
 logger = logging.getLogger(__name__)
 
 def launch_url(url):
-    #https://stackoverflow.com/questions/4216985/call-to-operating-system-to-open-url
+    # source: https://stackoverflow.com/questions/4216985/call-to-operating-system-to-open-url
     if sys.platform == 'win32':
         os.startfile(url)
     elif sys.platform == 'darwin':
@@ -21,68 +22,82 @@ def launch_url(url):
         try:
             subprocess.Popen(['xdg-open', url])
         except OSError:
-            logger.info ('Please open a browser on: ' + url)
+            logger.info('Please open a browser on: ' + url)
 
 def main():
-    usage = """
-    usage:
-           electron_inject [options] - <electron application>
+    options = parse_args()
+    logging.basicConfig(format='[%(filename)s - %(funcName)20s() ][%(levelname)8s] %(message)s',
+                        level=logging.WARNING if options.quiet else logging.DEBUG)
 
-    example:
-           electron_inject --enable-devtools-hotkeys - /path/to/electron/powered/application [--app-params app-args]
-        """
-    parser = OptionParser(usage=usage)
-    parser.add_option("-d", "--enable-devtools-hotkeys",
-                      action="store_true", dest="enable_devtools_hotkeys", default=False,
-                      help="Enable Hotkeys F12 (Toggle Developer Tools) and F5 (Refresh) [default: %default]")
-    parser.add_option("-b", "--browser",
-                      action="store_true", dest="browser", default=False,
-                      help="Launch Devtools in default browser. [default: %default]")
-    parser.add_option("-t", "--timeout",
-                      default=None,
-                      help="Try hard to inject for the time specified [default: %default]")
-    parser.add_option("-i", "--inject", help="path to JS file to inject")
+    timeout_at = time.time() + int(options.timeout)
 
-    if "--help" in sys.argv:
-        parser.print_help()
-        sys.exit(1)
-    if "-" not in sys.argv:
-        parser.error("mandatory delimiter '-' missing. see usage or  --help")
+    erb = ElectronRemoteDebugger.execute(options.target)
 
-    argidx = sys.argv.index("-")
-    target = sys.argv[argidx + 1]
-    if " " in target:
-        target = '"%s"' % target
-    target = ' '.join([target] + sys.argv[argidx + 2:]).strip()
-
-    # parse args
-    (options, args) = parser.parse_args(sys.argv[:argidx])
-    logging.basicConfig(level=logging.DEBUG, format='%(asctime)s - %(levelname)-8s - %(message)s')
-
-    if not len(target):
-        logger.error("mandatory argument <application> missing! see usage.")
-        sys.exit(1)
-
-    options.timeout = time.time() + int(options.timeout) if options.timeout else 5
-
-    erb = ElectronRemoteDebugger.execute(target)
-    # launch browser?
     if options.browser:
         launch_url("http://%(host)s:%(port)s/" % erb.params)
 
-    # erb = ElectronRemoteDebugger("localhost", 8888)
-
     scripts = determine_scripts_to_run(options)
-    inject(erb, options.timeout, scripts)
+    inject(erb, timeout_at, scripts)
+
+
+def parse_args():
+    usage = """
+    usage:
+        electron_inject [options] <electron application>
+
+    example:
+        electron_inject --enable-devtools-hotkeys --inject myscript.js /path/to/electron/app [--app-params app-args]
+    """
+    parser = ArgumentParser(usage=usage)
+    parser.add_argument("-q", "--quiet",
+                        action="store_true", default=False,
+                        help="Don't print debug information [default: %(default)s]")
+    parser.add_argument("-d", "--enable-devtools-hotkeys",
+                        action="store_true", dest="enable_devtools_hotkeys", default=False,
+                        help="Enable hotkeys F12 (Toggle Developer Tools) and F5 (Refresh) [default: %(default)s]")
+    parser.add_argument("-b", "--browser",
+                        action="store_true", dest="browser", default=False,
+                        help="Launch Devtools in default browser. [default: %(default)s]")
+    parser.add_argument("-t", "--timeout",
+                        default=5,
+                        help="Try hard to inject for the number of seconds specified [default: %(default)ss]")
+    parser.add_argument("-j", "--js",
+                        action="append",
+                        help="path to JS file to inject")
+    parser.add_argument("-c", "--css",
+                        action="append",
+                        help="path to CSS file to inject")
+    parser.add_argument("target", nargs='+',
+                        help="Electron app to launch along with its arguments")
+
+    # parse args
+    options = parser.parse_args()
+
+    print(options)
+
+    options.target = " ".join(map(enquote, options.target)).strip()
+
+    return options
+
+def enquote(str):
+    return '"' + str + '"' if " " in str else str
 
 
 def determine_scripts_to_run(options):
     scripts = []
     if options.enable_devtools_hotkeys:
         scripts.append(SCRIPT_HOTKEYS_F12_DEVTOOLS_F5_REFRESH)
-    if options.inject is not None:
-        scripts.append(open(options.inject, "r").read())
+    if options.js is not None:
+        for script in options.js:
+            scripts.append(open(script, "r").read())
+    if options.css is not None:
+        for script in options.css:
+            scripts.append(create_css_inject_script(open(script, "r").read()))
     return scripts
+
+
+def create_css_inject_script(css):
+    return SCRIPT_INSERT_CSS + "insert_css(`" + css + "`);"
 
 
 def inject(erb, timeout, scripts):
@@ -106,7 +121,4 @@ def inject(erb, timeout, scripts):
 
 
 if __name__ == '__main__':
-    logging.basicConfig(format='[%(filename)s - %(funcName)20s() ][%(levelname)8s] %(message)s',
-                        level=logging.INFO)
-    logger.setLevel(logging.DEBUG)
     main()

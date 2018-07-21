@@ -8,8 +8,12 @@ import websocket
 import json
 import socket
 import subprocess
+import logging
 
-SCRIPT_HOTKEYS_F12_DEVTOOLS_F5_REFRESH = """document.addEventListener("keydown", function (e) {
+logger = logging.getLogger(__name__)
+
+
+SCRIPT_DEVTOOLS_HOTKEYS = """document.addEventListener("keydown", function (e) {
     if (e.which === 123) {
         //F12
         require("electron").remote.BrowserWindow.getFocusedWindow().webContents.toggleDevTools();
@@ -18,6 +22,22 @@ SCRIPT_HOTKEYS_F12_DEVTOOLS_F5_REFRESH = """document.addEventListener("keydown",
         location.reload();
     }
 });"""
+
+# inspired by https://github.com/substack/insert-css/blob/master/index.js
+SCRIPT_INSERT_CSS = """
+function insert_css(css) {
+    var styleElement = document.createElement('style');
+    styleElement.setAttribute('type', 'text/css');
+    document.querySelector('head').appendChild(styleElement);
+    if (styleElement.styleSheet) {
+        styleElement.styleSheet.cssText += css;
+    } else {
+        styleElement.textContent += css;
+    }
+    return styleElement;
+};
+
+"""
 
 
 class LazyWebsocket(object):
@@ -104,7 +124,7 @@ class ElectronRemoteDebugger(object):
         sock.close()
 
         cmd = "%s %s" % (path, "--remote-debugging-port=%d" % port)
-        print("launching " + cmd)
+        logger.info("launching " + cmd)
         subprocess.Popen(cmd, shell=True)
 
         sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
