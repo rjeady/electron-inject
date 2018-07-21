@@ -26,7 +26,7 @@ def launch_url(url):
 
 def main():
     options = parse_args()
-    logging.basicConfig(format='[%(filename)s - %(funcName)20s() ][%(levelname)8s] %(message)s',
+    logging.basicConfig(format='[%(filename)s::%(funcName)s][%(levelname)s] %(message)s',
                         level=logging.WARNING if options.quiet else logging.DEBUG)
 
     timeout_at = time.time() + int(options.timeout)
