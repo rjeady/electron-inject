@@ -88,21 +88,22 @@ def determine_scripts_to_run(options):
 def inject(erb, timeout, scripts):
     windows_visited = set()
     while True:
-        for w in (_ for _ in erb.windows() if _['id'] not in windows_visited):
-            for script in scripts:
-                try:
-                    logger.info("injecting script into %s" % w['id'])
-                    logger.debug(erb.eval(w, script))
-                except Exception as e:
-                    logger.exception(e)
-                finally:
-                    # patch windows only once
-                    windows_visited.add(w['id'])
+        for window in (_ for _ in erb.windows() if _['id'] not in windows_visited):
+            try:
+                logger.info("injecting scripts into window %s" % window['id'])
+                for script in scripts:
+                    logger.debug(erb.eval(window, script))
+            except Exception as e:
+                logger.exception(e)
+            finally:
+                # patch each window only once
+                windows_visited.add(window['id'])
 
         if time.time() > timeout:
             break
-        logger.debug("timeout not hit.")
+        logger.debug("retrying in 1 second")
         time.sleep(1)
+
 
 if __name__ == '__main__':
     logging.basicConfig(format='[%(filename)s - %(funcName)20s() ][%(levelname)8s] %(message)s',
