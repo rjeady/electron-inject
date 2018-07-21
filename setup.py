@@ -16,15 +16,11 @@ setup(
     version="0.4",
     description="A wrapper for injecting javascript and css into electron apps",
     long_description=read("README.md"),
-    long_description_content_type="text/markdown",
     url="https://github.com/rjeady/injectron/",
     author="Rob Eady",
     keywords=["electron", "inject", "injectron", "devtools", "developer tools"],
     license="GPLv3",
     packages=["injectron"],
-    install_requires=["websocket","requests"],
+    install_requires=["websocket-client","requests"],
     package_data={"injectron": ["*.js"]},
-    entry_points={
-        "console_scripts": ["injectron=injectron.main:main"],
-    }
 )
