@@ -8,7 +8,6 @@ import websocket
 import json
 import socket
 import subprocess
-import time
 
 SCRIPT_HOTKEYS_F12_DEVTOOLS_F5_REFRESH = """document.addEventListener("keydown", function (e) {
     if (e.which === 123) {
@@ -105,9 +104,8 @@ class ElectronRemoteDebugger(object):
         sock.close()
 
         cmd = "%s %s" % (path, "--remote-debugging-port=%d" % port)
-        print (cmd)
+        print("launching " + cmd)
         subprocess.Popen(cmd, shell=True)
-
 
         sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
         for _ in range(30):
@@ -121,4 +119,4 @@ class ElectronRemoteDebugger(object):
 if __name__ == "__main__":
     erb = ElectronRemoteDebugger("localhost", 8888)
     for w in erb.windows():
-        print (erb.eval(w, SCRIPT_HOTKEYS_F12_DEVTOOLS_F5_REFRESH))
+        print(erb.eval(w, SCRIPT_HOTKEYS_F12_DEVTOOLS_F5_REFRESH))
