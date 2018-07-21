@@ -13,33 +13,6 @@ import logging
 logger = logging.getLogger(__name__)
 
 
-SCRIPT_DEVTOOLS_HOTKEYS = """document.addEventListener("keydown", function (e) {
-    if (e.which === 123) {
-        //F12
-        require("electron").remote.BrowserWindow.getFocusedWindow().webContents.toggleDevTools();
-    } else if (e.which === 116) {
-        //F5
-        location.reload();
-    }
-});"""
-
-# inspired by https://github.com/substack/insert-css/blob/master/index.js
-SCRIPT_INSERT_CSS = """
-function insert_css(css) {
-    var styleElement = document.createElement('style');
-    styleElement.setAttribute('type', 'text/css');
-    document.querySelector('head').appendChild(styleElement);
-    if (styleElement.styleSheet) {
-        styleElement.styleSheet.cssText += css;
-    } else {
-        styleElement.textContent += css;
-    }
-    return styleElement;
-};
-
-"""
-
-
 class LazyWebsocket(object):
     def __init__(self, url):
         self.url = url
@@ -97,7 +70,6 @@ class ElectronRemoteDebugger(object):
         return w['ws'].sendrcv(msg)
 
     def eval(self, w, expression):
-
         data = {'id': 1,
                 'method': "Runtime.evaluate",
                 'params': {'contextId': 1,
@@ -134,9 +106,3 @@ class ElectronRemoteDebugger(object):
                 break
             time.sleep(1)
         return cls("localhost", port=port)
-
-
-if __name__ == "__main__":
-    erb = ElectronRemoteDebugger("localhost", 8888)
-    for w in erb.windows():
-        print(erb.eval(w, SCRIPT_HOTKEYS_F12_DEVTOOLS_F5_REFRESH))

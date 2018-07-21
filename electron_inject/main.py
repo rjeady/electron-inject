@@ -7,7 +7,7 @@ import subprocess
 import sys
 import time
 from argparse import ArgumentParser
-from utils import ElectronRemoteDebugger, SCRIPT_HOTKEYS_F12_DEVTOOLS_F5_REFRESH, SCRIPT_INSERT_CSS
+from connect import ElectronRemoteDebugger
 import logging
 
 logger = logging.getLogger(__name__)
@@ -53,10 +53,10 @@ def parse_args():
                         action="store_true", default=False,
                         help="Don't print debug information [default: %(default)s]")
     parser.add_argument("-d", "--enable-devtools-hotkeys",
-                        action="store_true", dest="enable_devtools_hotkeys", default=False,
+                        action="store_true", default=False,
                         help="Enable hotkeys F12 (Toggle Developer Tools) and F5 (Refresh) [default: %(default)s]")
     parser.add_argument("-b", "--browser",
-                        action="store_true", dest="browser", default=False,
+                        action="store_true", default=False,
                         help="Launch Devtools in default browser. [default: %(default)s]")
     parser.add_argument("-t", "--timeout",
                         default=5,
@@ -67,16 +67,13 @@ def parse_args():
     parser.add_argument("-c", "--css",
                         action="append",
                         help="path to CSS file to inject")
-    parser.add_argument("target", nargs='+',
+    parser.add_argument("target",
+                        nargs='+',
                         help="Electron app to launch along with its arguments")
 
-    # parse args
     options = parser.parse_args()
-
-    print(options)
-
+    # we will exec the target string directly so wrap quotes around elements with spaces
     options.target = " ".join(map(enquote, options.target)).strip()
-
     return options
 
 def enquote(str):
@@ -86,7 +83,7 @@ def enquote(str):
 def determine_scripts_to_run(options):
     scripts = []
     if options.enable_devtools_hotkeys:
-        scripts.append(SCRIPT_HOTKEYS_F12_DEVTOOLS_F5_REFRESH)
+        scripts.append(read_resource("devtools_hotkeys.js"))
     if options.js is not None:
         for script in options.js:
             scripts.append(open(script, "r").read())
@@ -96,8 +93,13 @@ def determine_scripts_to_run(options):
     return scripts
 
 
+def read_resource(file_name):
+    location = os.path.realpath(os.path.join(os.getcwd(), os.path.dirname(__file__)))
+    return open(os.path.join(location, file_name)).read()
+
+
 def create_css_inject_script(css):
-    return SCRIPT_INSERT_CSS + "insert_css(`" + css + "`);"
+    return read_resource("insert_css.js") + "insert_css(`" + css + "`);"
 
 
 def inject(erb, timeout, scripts):
