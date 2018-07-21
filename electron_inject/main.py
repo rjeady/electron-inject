@@ -6,7 +6,7 @@ import os, subprocess
 import sys
 import time
 from optparse import OptionParser
-from electron_inject import ElectronRemoteDebugger, SCRIPT_HOTKEYS_F12_DEVTOOLS_F5_REFRESH
+from utils import ElectronRemoteDebugger, SCRIPT_HOTKEYS_F12_DEVTOOLS_F5_REFRESH
 import logging
 
 logger = logging.getLogger(__name__)
