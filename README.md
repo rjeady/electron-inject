@@ -1,58 +1,39 @@
-# 💉 electron-inject
+# injectron
 
-You find yourself locked out of closed source electron applications with no easy way to enable developer tools? ↷ *electron-inject* is here to help 👲
+*injectron* allows you to inject CSS and JS into electron based applications.
 
+It has a built in script for enabling F12 devtools and F5 refresh hotkeys.
 
-*electron-inject* is an application wrapper that utilizes the remote debug console to inject javascript code into electron based applications. For example, this can be pretty handy to enable otherwise unavailable features like the built-in developer console.
+It was inspired by and based on [electron-inject](https://github.com/tintinweb/electron-inject).
 
-![slack](https://cloud.githubusercontent.com/assets/2865694/24376228/70b2c2b0-133b-11e7-893c-c7a0ad262343.gif)
+# Installation
 
+To put an `injectron` binary on your PATH, clone this repository and
 
-# install
+    $ pip3 install .
 
-    $ pip install electron-inject
-    
-or 
+or
 
-    $ python setup.py install
-    
-# usage
+    $ python3 setup.py install
 
-    $ python -m electron_inject --help
-    Usage:
-        usage:
-               electron_inject [options] - <electron application>
+# Running without installing
 
-        example:
-               electron_inject --enable-dev-tool-hotkey - /path/to/electron/powered/application [--app-params app-args]
+You can just run `python3 injectron.py` instead of installing as `injectron` if you prefer.
 
+# Usage
 
-    Options:
-      -h, --help            show this help message and exit
-      -d, --enable-devtools-hotkeys
-                            Enable Hotkeys F12 (Toggle Developer Tools) and F5
-                            (Refresh) [default: False]
-      -b, --browser         Launch Devtools in default browser. [default: False]
-      -t TIMEOUT, --timeout=TIMEOUT
-                            Try hard to inject for the time specified [default:
-                            none]
+    injectron [options] <electron application>
 
-# Showcase
+For example
 
-Inject hotkeys *F12:toggle devconsole* and *F5:reload* into closed source apps with devconsole disabled.
+    injectron --enable-devtools-hotkeys --js my.js --css my.css /path/to/electron/app [--app-params app-args]
 
-`--enable-devtools-hotkeys` .. enable developer hotkeys
-`--timeout=xx` .. patch all known remote webContent/windows in a timeframe of `xx` seconds. set this to an arbitrary high value to make sure we're patching all future windows.
+You can specify any number of css and js files. Trailing arguments are forwarded to the electron app.
 
-## whatsapp
+See `--help` for full details.
 
-`$ python -m electron_inject -d -t 60 - \\PATH\TO\Local\WhatsApp\app-0.2.2244\WhatsApp.exe`
+# How it works
 
-![whatsapp gif](https://cloud.githubusercontent.com/assets/2865694/24376256/81d44e88-133b-11e7-961f-060e7b8201ed.gif)
+The script will launch the electron app, specifying a debugging port. Then it will connect to that port and evaluate the specified scripts using the debugger.
 
-## slack
-
-`$ python -m electron_inject -d -t 60 - \\PATH\TO\Local\slack\app-2.5.2\slack.exe`
-
-![slack](https://cloud.githubusercontent.com/assets/2865694/24376228/70b2c2b0-133b-11e7-893c-c7a0ad262343.gif)
-
+It will attempt to do this against every window of the application for several seconds (configurable using a timeout argument). This will include looking for embedded webviews.
