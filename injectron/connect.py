@@ -1,6 +1,5 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
-# @author: github.com/tintinweb
 
 import requests
 import time

@@ -1,13 +1,12 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
-# @author: github.com/tintinweb
 
 import os
 import subprocess
 import sys
 import time
 from argparse import ArgumentParser
-from connect import ElectronRemoteDebugger
+from .connect import ElectronRemoteDebugger
 import logging
 
 logger = logging.getLogger(__name__)
@@ -120,7 +119,3 @@ def inject(erb, timeout, scripts):
             break
         logger.debug("retrying in 1 second")
         time.sleep(1)
-
-
-if __name__ == '__main__':
-    main()

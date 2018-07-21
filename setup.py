@@ -9,22 +9,22 @@ def read(fname):
         return open(os.path.join(os.path.dirname(__file__), fname)).read()
     except Exception:
         return "Not available"
+
+
 setup(
-    name="electron-inject",
-    version="0.3",
-    packages=["electron_inject"],
-    author="tintinweb",
-    author_email="tintinweb@oststrom.com",
-    description=(
-        "An electron application wrapper that utilizes the remote debug console to inject code into electron applications to enable developer tools"),
+    name="injectron",
+    version="0.4",
+    description="A wrapper for injecting javascript and css into electron apps",
+    long_description=read("README.md"),
+    long_description_content_type="text/markdown",
+    url="https://github.com/rjeady/injectron/",
+    author="Rob Eady",
+    keywords=["electron", "inject", "injectron", "devtools", "developer tools"],
     license="GPLv3",
-    keywords=["electron", "inject", "devtools", "developer tools"],
-    url="https://github.com/tintinweb/electron-inject/",
-    download_url="https://github.com/tintinweb/electron-inject/tarball/v0.3",
-    #python setup.py register -r https://testpypi.python.org/pypi
-    long_description=read("README.rst") if os.path.isfile("README.rst") else read("README.md"),
-    install_requires=['websocket','requests'],
-    package_data={
-                  'electron_inject': ['electron_inject'],
-                  },
+    packages=["injectron"],
+    install_requires=["websocket","requests"],
+    package_data={"injectron": ["*.js"]},
+    entry_points={
+        "console_scripts": ["injectron=injectron.main:main"],
+    }
 )
