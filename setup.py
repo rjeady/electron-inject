@@ -16,7 +16,7 @@ setup(
     version="0.4",
     description="A wrapper for injecting javascript and css into electron apps",
     long_description=read("README.md"),
-    url="https://github.com/rjeady/injectron/",
+    url="https://github.com/rjeady/injectron-py/",
     author="Rob Eady",
     keywords=["electron", "inject", "injectron", "devtools", "developer tools"],
     license="GPLv3",
